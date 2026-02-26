@@ -1,8 +1,8 @@
+using ServiceDefaults;
 using GenerationService.Models;
 using GenerationService.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
-using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 

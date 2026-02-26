@@ -1,8 +1,8 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -12,7 +12,7 @@ namespace ServiceDefaults;
 
 public static class ServiceDefaultsExtensions
 {
-    public static IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder builder)
+    public static WebApplicationBuilder AddServiceDefaults(this WebApplicationBuilder builder)
     {
         builder.ConfigureOpenTelemetry();
         builder.AddDefaultHealthChecks();
@@ -27,7 +27,7 @@ public static class ServiceDefaultsExtensions
         return builder;
     }
 
-    public static IHostApplicationBuilder ConfigureOpenTelemetry(this IHostApplicationBuilder builder)
+    public static WebApplicationBuilder ConfigureOpenTelemetry(this WebApplicationBuilder builder)
     {
         builder.Logging.AddOpenTelemetry(logging =>
         {
@@ -52,7 +52,7 @@ public static class ServiceDefaultsExtensions
         return builder;
     }
 
-    private static IHostApplicationBuilder AddOpenTelemetryExporters(this IHostApplicationBuilder builder)
+    private static WebApplicationBuilder AddOpenTelemetryExporters(this WebApplicationBuilder builder)
     {
         var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
         if (useOtlpExporter)
@@ -62,7 +62,7 @@ public static class ServiceDefaultsExtensions
         return builder;
     }
 
-    public static IHostApplicationBuilder AddDefaultHealthChecks(this IHostApplicationBuilder builder)
+    public static WebApplicationBuilder AddDefaultHealthChecks(this WebApplicationBuilder builder)
     {
         builder.Services.AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"]);
