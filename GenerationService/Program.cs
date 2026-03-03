@@ -11,15 +11,26 @@ builder.AddServiceDefaults();
 builder.AddRedisDistributedCache("cache");
 
 builder.Services.AddCors(options =>
-    options.AddDefaultPolicy(policy =>
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        options.AddDefaultPolicy(policy =>
+            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+    }
+    else
+    {
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        options.AddDefaultPolicy(policy =>
+            policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod());
+    }
+});
 
 var app = builder.Build();
 
 app.UseCors();
 app.MapDefaultEndpoints();
 
-app.MapGet("/course", async (int id, IDistributedCache cache, ILogger<Program> logger) =>
+app.MapGet("/course", async (int id, IDistributedCache cache, IConfiguration configuration, ILogger<Program> logger) =>
 {
     if (id <= 0)
         return Results.BadRequest("Received invalid ID. ID must be a positive number");
@@ -40,12 +51,14 @@ app.MapGet("/course", async (int id, IDistributedCache cache, ILogger<Program> l
     logger.LogInformation("Cache miss for course with id {CourseId}, generating new data", id);
     var course = CourseGenerator.Generate(id);
 
+    var cacheExpirationMinutes = configuration.GetValue<int>("Cache:ExpirationMinutes", 10);
+    
     await cache.SetStringAsync(
         cacheKey,
         JsonSerializer.Serialize(course),
         new DistributedCacheEntryOptions
         {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(cacheExpirationMinutes)
         });
 
     logger.LogInformation(

@@ -8,17 +8,17 @@ public class Course
     /// <summary>
     /// Уникальный идентификатор курса
     /// </summary>
-    public int Id { get; init; }
+    public int Id { get; set; }
 
     /// <summary>
     /// Название курса
     /// </summary>
-    public string Name { get; init; } = string.Empty;
+    public required string Name { get; init; }
 
     /// <summary>
     /// Полное имя преподавателя курса
     /// </summary>
-    public string TeacherFullName { get; init; } = string.Empty;
+    public required string TeacherFullName { get; init; }
 
     /// <summary>
     /// Дата начала курса
@@ -33,12 +33,12 @@ public class Course
     /// <summary>
     /// Максимально допустимое количество студентов, которые могут быть зачислены на курс
     /// </summary>
-    public int MaxStudents { get; init; }
+    public int MaxCountStudents { get; init; }
 
     /// <summary>
     /// Текущее количество записанных студентов
     /// </summary>
-    public int CurrentStudents { get; init; }
+    public int CurrentCountStudents { get; init; }
 
     /// <summary>
     /// Выдаётся ли по окончании курса сертификат

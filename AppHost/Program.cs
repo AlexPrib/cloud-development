@@ -1,6 +1,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var cache = builder.AddRedis("cache");
+var cache = builder.AddRedis("cache")
+    .WithRedisInsight();
 
 var generationService = builder.AddProject<Projects.GenerationService>("generation-service")
     .WithReference(cache)
