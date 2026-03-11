@@ -4,29 +4,17 @@ using Ocelot.Values;
 
 namespace ApiGateway;
 
-public class QueryBasedLoadBalancer : ILoadBalancer
+public class QueryBasedLoadBalancer(Func<Task<List<Service>>> services) : ILoadBalancer
 {
-    private readonly Func<Task<List<Service>>> _services;
-
-    public QueryBasedLoadBalancer()
-    {
-        _services = () => Task.FromResult(new List<Service>());
-    }
-
-    public QueryBasedLoadBalancer(Func<Task<List<Service>>> services)
-    {
-        _services = services;
-    }
-
     public string Type => nameof(QueryBasedLoadBalancer);
 
     public void Release(ServiceHostAndPort hostAndPort) { }
 
     public async Task<Response<ServiceHostAndPort>> LeaseAsync(HttpContext httpContext)
     {
-        var services = await _services();
+        var servicesList = await services();
 
-        if (services == null || services.Count == 0)
+        if (servicesList == null || servicesList.Count == 0)
         {
             return new ErrorResponse<ServiceHostAndPort>(
                 new NoServicesAvailableError("No services available for load balancing"));
@@ -35,12 +23,12 @@ public class QueryBasedLoadBalancer : ILoadBalancer
         if (!httpContext.Request.Query.TryGetValue("id", out var idValues)
             || !int.TryParse(idValues.FirstOrDefault(), out var id))
         {
-            var firstService = services[0];
+            var firstService = servicesList[0];
             return new OkResponse<ServiceHostAndPort>(firstService.HostAndPort);
         }
 
-        var replicaIndex = id % services.Count;
-        var selectedService = services[replicaIndex];
+        var replicaIndex = id % servicesList.Count;
+        var selectedService = servicesList[replicaIndex];
 
         return new OkResponse<ServiceHostAndPort>(selectedService.HostAndPort);
     }

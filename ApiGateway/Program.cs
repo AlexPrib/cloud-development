@@ -1,13 +1,12 @@
+using ApiGateway;
+using Ocelot.Configuration.File;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using ServiceDefaults;
-using ApiGateway;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-
-builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
 
 builder.Services.AddCors(options =>
 {
@@ -24,8 +23,17 @@ builder.Services.AddCors(options =>
     }
 });
 
+var ocelotConfigService = new OcelotConfigurationService(builder.Configuration);
+var ocelotConfig = ocelotConfigService.BuildConfiguration();
+
+builder.Services.Configure<FileConfiguration>(config =>
+{
+    config.Routes = ocelotConfig.Routes;
+    config.GlobalConfiguration = ocelotConfig.GlobalConfiguration;
+});
+
 builder.Services
-    .AddOcelot(builder.Configuration)
+    .AddOcelot()
     .AddCustomLoadBalancer((serviceProvider, route, serviceDiscoveryProvider) =>
     {
         return new QueryBasedLoadBalancer(serviceDiscoveryProvider.GetAsync);

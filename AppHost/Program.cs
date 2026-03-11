@@ -3,27 +3,27 @@ var builder = DistributedApplication.CreateBuilder(args);
 var cache = builder.AddRedis("cache")
     .WithRedisInsight();
 
-var generationService0 = builder.AddProject<Projects.GenerationService>("generation-service-0")
-    .WithReference(cache)
-    .WithEndpoint("http", endpoint => endpoint.Port = 5000)
-    .WaitFor(cache);
+const int replicaCount = 3;
+var generationServices = new List<IResourceBuilder<ProjectResource>>();
 
-var generationService1 = builder.AddProject<Projects.GenerationService>("generation-service-1")
-    .WithReference(cache)
-    .WithEndpoint("http", endpoint => endpoint.Port = 5001)
-    .WaitFor(cache);
+for (var i = 0; i < replicaCount; i++)
+{
+    var service = builder.AddProject<Projects.GenerationService>($"generation-service-{i}")
+        .WithReference(cache)
+        .WithEndpoint("http", endpoint => endpoint.Port = 5000 + i)
+        .WaitFor(cache);
 
-var generationService2 = builder.AddProject<Projects.GenerationService>("generation-service-2")
-    .WithReference(cache)
-    .WithEndpoint("http", endpoint => endpoint.Port = 5002)
-    .WaitFor(cache);
+    generationServices.Add(service);
+}
 
 var apiGateway = builder.AddProject<Projects.ApiGateway>("api-gateway")
     .WithEndpoint("http", endpoint => endpoint.Port = 5100)
-    .WithExternalHttpEndpoints()
-    .WaitFor(generationService0)
-    .WaitFor(generationService1)
-    .WaitFor(generationService2);
+    .WithExternalHttpEndpoints();
+
+foreach (var service in generationServices)
+{
+    apiGateway = apiGateway.WithReference(service).WaitFor(service);
+}
 
 builder.AddProject<Projects.Client_Wasm>("client-wasm")
     .WithExternalHttpEndpoints()
