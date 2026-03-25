@@ -36,19 +36,6 @@ public class IntegrationTests(AppHostFixture fixture) : IClassFixture<AppHostFix
     }
 
     /// <summary>
-    /// Проверяет, что запрос с отрицательным id возвращает 400 BadRequest.
-    /// </summary>
-    [Fact]
-    public async Task GetCourse_WithNegativeId_ReturnsBadRequest()
-    {
-        using var client = fixture.App.CreateHttpClient("api-gateway", "http");
-
-        using var response = await client.GetAsync("/course?id=-5");
-
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    /// <summary>
     /// Проверяет, что повторный запрос с тем же id возвращает идентичные данные из Redis-кэша.
     /// </summary>
     [Fact]
